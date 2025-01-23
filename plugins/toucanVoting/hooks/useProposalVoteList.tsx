@@ -12,6 +12,7 @@ import { usePublicClient } from "wagmi";
 import {
   PUB_CHAIN,
   PUB_L2_CHAIN,
+  PUB_L2_START_BLOCK,
   PUB_TOUCAN_RECEIVER_ADDRESS,
   PUB_TOUCAN_VOTING_PLUGIN_ADDRESS,
   PUB_TOUCAN_VOTING_PLUGIN_L2_ADDRESS,
@@ -74,7 +75,7 @@ export function useRelayVotesList(proposalId: string, proposal: Proposal | null)
         proposalRef,
       },
       // TODO: how can we improve this in a performant way
-      fromBlock: 0n,
+      fromBlock: PUB_L2_START_BLOCK,
       toBlock: "latest",
     })) as any;
 

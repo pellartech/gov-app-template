@@ -1,6 +1,12 @@
 import { usePublicClient, useReadContract } from "wagmi";
 import { useProposalRef } from "./useProposalRef";
-import { PUB_CHAIN, PUB_L2_CHAIN, PUB_TOUCAN_RECEIVER_ADDRESS, PUB_TOUCAN_VOTING_PLUGIN_L2_ADDRESS } from "@/constants";
+import {
+  PUB_CHAIN,
+  PUB_L2_CHAIN,
+  PUB_L2_START_BLOCK,
+  PUB_TOUCAN_RECEIVER_ADDRESS,
+  PUB_TOUCAN_VOTING_PLUGIN_L2_ADDRESS,
+} from "@/constants";
 import { ToucanRelayAbi } from "../artifacts/ToucanRelay.sol";
 import { getAbiItem } from "viem";
 import {
@@ -62,7 +68,7 @@ export function useDispatchEvents(proposalId: string, proposal: Proposal | null)
         proposalRef,
       },
       // TODO: how can we do this in a performant way given l2 timestamps
-      fromBlock: 0n,
+      fromBlock: PUB_L2_START_BLOCK,
       toBlock: "latest",
     })) as any;
 
