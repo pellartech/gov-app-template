@@ -12,31 +12,44 @@ export function uploadToIPFS(client: IPFSHTTPClient, blob: Blob) {
   });
 }
 
-async function fetchFromIPFS(ipfsUri: string): Promise<Response> {
-  if (!ipfsUri) throw new Error("Invalid IPFS URI");
-  else if (ipfsUri.startsWith("0x")) {
-    // fallback
-    ipfsUri = fromHex(ipfsUri as Hex, "string");
+export async function uploadToIpfsPinata(file: File) {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
 
-    if (!ipfsUri) throw new Error("Invalid IPFS URI");
-  }
+    const pinataMetadata = JSON.stringify({
+      name: "File name",
+    });
+    formData.append("pinataMetadata", pinataMetadata);
 
-  const path = resolvePath(ipfsUri);
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), 800);
-  const response = await fetch(`${PUB_IPFS_ENDPOINT}/cat?arg=${path}`, {
-    method: "POST",
-    headers: {
-      "X-API-KEY": PUB_IPFS_API_KEY,
-      Accept: "application/json",
-    },
-    signal: controller.signal,
-  });
-  clearTimeout(id);
-  if (!response.ok) {
-    throw new Error("Could not connect to the IPFS endpoint");
+    const pinataOptions = JSON.stringify({
+      cidVersion: 1,
+    });
+    formData.append("pinataOptions", pinataOptions);
+
+    const request = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${PUB_IPFS_API_KEY}`,
+      },
+      body: formData,
+    });
+    const response = await request.json();
+    console.log(response);
+    return response.IpfsHash;
+  } catch (error) {
+    console.log(error);
   }
-  return response; // .json(), .text(), .blob(), etc.
+}
+
+async function fetchFromIPFS(ipfsUri: string): Promise<any> {
+  try {
+    const url = `${PUB_IPFS_ENDPOINT}/ipfs/${ipfsUri}`;
+    const request = await fetch(url);
+    return request;
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 function resolvePath(uri: string) {
