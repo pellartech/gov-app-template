@@ -30,7 +30,7 @@ export const PUB_DELEGATION_ANNOUNCEMENTS_START_BLOCK = BigInt(
 export const PUB_CHAIN_NAME = (process.env.NEXT_PUBLIC_CHAIN_NAME ?? "sepolia") as ChainName;
 export const PUB_CHAIN = getChain(PUB_CHAIN_NAME);
 
-export const PUB_L2_CHAIN_NAME = (process.env.NEXT_PUBLIC_L2_CHAIN_NAME ?? "arbitrumSepolia") as ChainName;
+export const PUB_L2_CHAIN_NAME = (process.env.NEXT_PUBLIC_L2_CHAIN_NAME || "arbitrumSepolia") as ChainName;
 export const PUB_L2_CHAIN = getChain(PUB_L2_CHAIN_NAME);
 
 // Network and services

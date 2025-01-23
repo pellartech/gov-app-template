@@ -1,6 +1,6 @@
 import { DataListItem, StateSkeletonBar, StateSkeletonCircular } from "@aragon/ods";
 
-export interface IVotesDataListItemSkeletonProps {}
+export type IVotesDataListItemSkeletonProps = object;
 
 export const VotesDataListItemSkeleton: React.FC<IVotesDataListItemSkeletonProps> = () => {
   return (

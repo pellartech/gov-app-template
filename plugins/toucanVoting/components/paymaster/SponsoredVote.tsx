@@ -91,6 +91,7 @@ export function usePaymasterTransaction() {
       setIsSubmitted(false);
 
       try {
+        // eslint-disable-next-line no-unsafe-optional-chaining
         const [account] = await window.ethereum?.request({ method: "eth_requestAccounts" });
         if (!account) {
           throw new Error("Could not retrieve account");
@@ -239,9 +240,6 @@ export default function SponsoredMint() {
       <p>Mint some tokens using ZkSync Paymasters!</p>
       <p>Your Balance is {formatEther(balance ?? 0n) ?? "0"}</p>
       {isError && <p>{error}</p>}
-      <Button disabled={disabled} onClick={mint}>
-        {isMinting ? <Spinner /> : "Mint"}
-      </Button>
     </Card>
   );
 }
