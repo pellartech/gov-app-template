@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@aragon/ods": "1.0.30",
-    "@layerzerolabs/lz-definitions": "^2.3.27",
+    "@layerzerolabs/lz-definitions": "^3.0.51",
     "@layerzerolabs/lz-v2-utilities": "^2.3.27",
     "@layerzerolabs/scan-client": "^0.0.8",
     "@react-native-async-storage/async-storage": "^1.23.1",
