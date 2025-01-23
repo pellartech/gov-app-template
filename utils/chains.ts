@@ -11,6 +11,55 @@ import {
   zkSyncSepoliaTestnet,
 } from "@wagmi/core/chains";
 
+export const pegasus: Chain = {
+  id: 1891,
+  name: "Lightlink Pegasus",
+  nativeCurrency: {
+    name: "ETH",
+    symbol: "ETH",
+    decimals: 18,
+  },
+  rpcUrls: {
+    default: {
+      http: ["https://replica-pegasus.lightlink.io"],
+    },
+    public: {
+      http: ["https://replica-pegasus.lightlink.io"],
+    },
+  },
+  blockExplorers: {
+    default: {
+      name: "Lightlink Explorer",
+      url: "https://pegasus.lightlink.io",
+    },
+  },
+  testnet: true,
+};
+
+export const phoenix: Chain = {
+  id: 1890,
+  name: "Lightlink Phoenix",
+  nativeCurrency: {
+    name: "ETH",
+    symbol: "ETH",
+    decimals: 18,
+  },
+  rpcUrls: {
+    default: {
+      http: ["https://replica-phoenix.lightlink.io"],
+    },
+    public: {
+      http: ["https://replica-phoenix.lightlink.io"],
+    },
+  },
+  blockExplorers: {
+    default: {
+      name: "Lightlink Explorer",
+      url: "https://phoenix.lightlink.io",
+    },
+  },
+  testnet: false,
+};
 const chainNames = [
   "mainnet",
   "polygon",
@@ -21,6 +70,8 @@ const chainNames = [
   "optimismSepolia",
   "zkSync",
   "zkSyncSepolia",
+  "pegasus",
+  "phoenix",
 ] as const;
 export type ChainName = (typeof chainNames)[number];
 
@@ -44,13 +95,17 @@ export function readableChainName(chainName: ChainName): string {
       return "ZkSync Era";
     case "zkSyncSepolia":
       return "ZkSync Sepolia";
+    case "pegasus":
+      return "Lightlink Pegasus";
+    case "phoenix":
+      return "Lightlink Phoenix";
     default:
       throw new Error("Unknown chain");
   }
 }
 
 // as const prevents using includes check
-const testnets = ["sepolia", "mumbai", "arbitrumSepolia", "optimismSepolia"];
+const testnets = ["sepolia", "mumbai", "arbitrumSepolia", "optimismSepolia", "pegasus"];
 
 export function getChain(chainName: ChainName): Chain {
   switch (chainName) {
@@ -72,6 +127,10 @@ export function getChain(chainName: ChainName): Chain {
       return zkSync;
     case "zkSyncSepolia":
       return zkSyncSepoliaTestnet;
+    case "pegasus":
+      return pegasus;
+    case "phoenix":
+      return phoenix;
     default:
       throw new Error("Unknown chain");
   }

@@ -26,6 +26,11 @@ export function getEid(chainName: ChainName): EndpointId {
     // wont work tho
     case "zkSyncSepolia":
       return EndpointId.ZKSYNCSEP_V2_TESTNET;
+    case "pegasus":
+      return EndpointId.LIGHTLINK_V2_TESTNET;
+    case "phoenix":
+      return EndpointId.LIGHTLINK_V2_MAINNET;
+
     default:
       throw new Error("Unknown chain");
   }
@@ -72,6 +77,18 @@ const CROSS_CHAIN_GAS_DEFAULTS: CrossChainGas = {
     RELAY_ACTIONS: 250_000,
   },
   ["zkSync"]: {
+    BRIDGE_OFT: 250_000,
+    DISPATCH_VOTES: 250_000,
+  },
+  ["pegasus"]: {
+    BRIDGE_OFT: 250_000,
+    DISPATCH_VOTES: 250_000,
+  },
+  ["sepolia"]: {
+    BRIDGE_OFT: 250_000,
+    DISPATCH_VOTES: 250_000,
+  },
+  ["phoenix"]: {
     BRIDGE_OFT: 250_000,
     DISPATCH_VOTES: 250_000,
   },
