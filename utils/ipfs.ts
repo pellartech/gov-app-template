@@ -1,4 +1,4 @@
-import { PUB_IPFS_ENDPOINT, PUB_IPFS_API_KEY } from "@/constants";
+import { PUB_IPFS_ENDPOINT, PUB_IPFS_API_KEY, PUB_IPFS_GATEWAY_KEY } from "@/constants";
 import { CID, IPFSHTTPClient } from "ipfs-http-client";
 import { Hex, fromHex } from "viem";
 
@@ -44,7 +44,7 @@ export async function uploadToIpfsPinata(file: File) {
 
 async function fetchFromIPFS(ipfsUri: string): Promise<any> {
   try {
-    const url = `${PUB_IPFS_ENDPOINT}/ipfs/${ipfsUri}`;
+    const url = `${PUB_IPFS_ENDPOINT}/ipfs/${ipfsUri}?pinataGatewayToken=${PUB_IPFS_GATEWAY_KEY}`;
     const request = await fetch(url);
     return request;
   } catch (error) {

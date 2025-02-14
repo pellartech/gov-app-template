@@ -45,6 +45,7 @@ export const PUB_WALLET_CONNECT_PROJECT_ID = process.env.NEXT_PUBLIC_WALLET_CONN
 
 export const PUB_IPFS_ENDPOINT = process.env.NEXT_PUBLIC_IPFS_ENDPOINT ?? "";
 export const PUB_IPFS_API_KEY = process.env.NEXT_PUBLIC_IPFS_API_KEY ?? "";
+export const PUB_IPFS_GATEWAY_KEY = process.env.NEXT_PUBLIC_IPFS_GATEWAY_KEY ?? "";
 
 // General
 export const PUB_APP_NAME = "Aragonette";
@@ -58,3 +59,5 @@ export const PUB_DISCORD_URL = "https://discord.com/";
 // paymasters && zkSync
 export const PUB_MINTABLE_TOKEN_ADDRESS = (process.env.NEXT_PUBLIC_MINTABLE_TOKEN_ADDRESS ?? "") as Address;
 export const PUB_PAYMASTER_ADDRESS = (process.env.NEXT_PUBLIC_PAYMASTER_ADDRESS ?? "") as Address;
+
+export const PUB_BLOCKSCOUT_URL = process.env.NEXT_PUBLIC_BLOCKSCOUT_URL ?? "";
