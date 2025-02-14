@@ -20,9 +20,10 @@ import {
 import { ToucanRelayAbi } from "../artifacts/ToucanRelay.sol";
 import { useProposalRef } from "./useProposalRef";
 import { removeDuplicates } from "../utils/array";
+import { id, Interface } from "ethers"
+import { fetchBlockscoutLogs } from "../utils/blockscout";
 
 const L1VotingEvent = getAbiItem({ abi: TokenVotingAbi, name: "VoteCast" });
-const L2VotingEvent = getAbiItem({ abi: ToucanRelayAbi, name: "VoteCast" });
 
 export function useProposalVoteList(proposalId: string, proposal: Proposal | null) {
   const publicClient = usePublicClient({
@@ -57,41 +58,62 @@ export function useProposalVoteList(proposalId: string, proposal: Proposal | nul
   return proposalLogs;
 }
 
+
+const L2VotingEventInterface = new Interface(ToucanRelayAbi);
 export function useRelayVotesList(proposalId: string, proposal: Proposal | null) {
   const { proposalRef } = useProposalRef(Number(proposalId));
-  const publicClient = usePublicClient({
-    chainId: PUB_L2_CHAIN.id,
-  });
+  const publicClient = usePublicClient({ chainId: PUB_L2_CHAIN.id });
   const [proposalLogs, setLogs] = useState<VoteCastRelayEvent[]>([]);
 
   async function getLogs() {
     if (!proposal?.parameters?.snapshotBlock) return;
-    else if (!publicClient) return;
+    if (!publicClient) return;
 
-    const logs: VoteCastRelayResponse[] = (await publicClient.getLogs({
-      address: PUB_TOUCAN_VOTING_PLUGIN_L2_ADDRESS,
-      event: L2VotingEvent as any,
-      args: {
-        proposalRef,
-      },
-      // TODO: how can we improve this in a performant way
-      fromBlock: PUB_L2_START_BLOCK,
-      toBlock: "latest",
-    })) as any;
+    try {
+      const fromBlock = PUB_L2_START_BLOCK.toString();
+      const toBlock = "latest";
+      const address = PUB_TOUCAN_VOTING_PLUGIN_L2_ADDRESS;
+      const eventSignatureHash = id("VoteCast(uint32,uint256,address,(uint256,uint256,uint256))");
+      const topics = [eventSignatureHash, String(proposalRef)];
 
-    const newLogs = logs.flatMap((log) => log.args);
+      const rawLogs = await fetchBlockscoutLogs({
+        fromBlock,
+        toBlock,
+        address,
+        topics,
+        topicOpr: "and",
+      });
 
-    // find the last value in the new logs for each user
-    const lastLogForEachAddress = newLogs
-      .reverse()
-      .filter((log, index, self) => self.findIndex((l) => l.voter === log.voter) === index);
+      const parsedLogs = rawLogs
+        .map((log: any) => {
+          try {
+            return L2VotingEventInterface.parseLog({
+              data: log.data,
+              topics: log.topics,
+            });
+          } catch (error) {
+            console.error("Error parsing log:", error, log);
+            return null;
+          }
+        })
+        .filter((log: any) => log !== null);
 
-    if (lastLogForEachAddress.length > proposalLogs.length) setLogs(lastLogForEachAddress);
+      const newLogs = parsedLogs.map((log: any) => log.args).filter((log: any) => log.proposalRef === proposalRef);
+      const lastLogForEachAddress = [...newLogs]
+        .reverse()
+        .filter((log, index, self) => self.findIndex((l) => l.voter === log.voter) === index);
+
+      if (lastLogForEachAddress.length > proposalLogs.length) {
+        setLogs(lastLogForEachAddress as VoteCastRelayEvent[]);
+      }
+    } catch (error) {
+      console.error("Error fetching logs from Blockscout:", error);
+    }
   }
 
   useEffect(() => {
     getLogs();
-  }, [proposalId, proposal?.parameters?.snapshotBlock]);
+  }, [proposalId, proposal?.parameters?.snapshotBlock, proposalRef]);
 
   return proposalLogs;
 }
