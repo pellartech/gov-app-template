@@ -1,17 +1,30 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { If } from "@/components/if";
 import Image from "next/image";
-import { Button, Card, Link, TextAreaRichText } from "@aragon/ods";
-import { Address, formatUnits, toHex } from "viem";
+import { AlertInline, Button, Card, InputText, Link } from "@aragon/ods";
+import { Address, formatUnits, isAddress } from "viem";
 import { useEnsName, useEnsAvatar } from "wagmi";
 import { normalize } from "viem/ens";
 import { mainnet } from "wagmi/chains";
-import { useReadContract, useWriteContract } from "wagmi";
+import {
+  useChainId,
+  usePublicClient,
+  useReadContract,
+  useSwitchChain,
+  useWaitForTransactionReceipt,
+  useWriteContract,
+} from "wagmi";
 import { iVotesAbi } from "../artifacts/iVotes.sol";
 import { formatHexString } from "@/utils/evm";
-import { DelegateAnnouncerAbi } from "@/plugins/delegateAnnouncer/artifacts/DelegateAnnouncer.sol";
-import * as DOMPurify from "dompurify";
-import { PUB_DAO_ADDRESS, PUB_DELEGATION_CONTRACT_ADDRESS } from "@/constants";
+import DOMPurify from "dompurify";
+import { getTokenAddressByChainId, PUB_CHAIN, PUB_CHAIN_NAME, PUB_L2_CHAIN, PUB_L2_CHAIN_NAME } from "@/constants";
+import { pegasus } from "@/utils/chains";
+import { useAlerts } from "@/context/Alerts";
+
+const CHAIN_OPTIONS = [
+  { name: PUB_CHAIN_NAME, chainId: PUB_CHAIN.id },
+  { name: PUB_L2_CHAIN_NAME, chainId: PUB_L2_CHAIN.id },
+] as const;
 
 type SelfDelegationProfileCardProps = {
   address: Address;
@@ -23,101 +36,185 @@ type SelfDelegationProfileCardProps = {
 
 export const SelfDelegationProfileCard = ({
   address,
-  tokenAddress,
+  tokenAddress: _tokenAddressProp,
   message,
   loading,
   delegates,
 }: SelfDelegationProfileCardProps) => {
-  const [inputDescription, setInputDescription] = useState<string>();
+  const [to, setTo] = useState<Address>();
+  const [selectedChainId, setSelectedChainId] = useState<number>(PUB_CHAIN.id);
+
+  const tokenAddress = getTokenAddressByChainId(selectedChainId);
+
   const result = useEnsName({
     chainId: mainnet.id,
     address,
+    query: {
+      enabled: !!address && address !== "0x",
+    },
   });
   const avatarResult = useEnsAvatar({
-    name: normalize(result.data!),
+    name: result.data ? normalize(result.data) : undefined,
     chainId: mainnet.id,
     gatewayUrls: ["https://cloudflare-ipfs.com"],
+    query: {
+      enabled: !!result.data,
+    },
   });
-  const { data: votingPower } = useReadContract({
+  const { data: votingPower, refetch: refetchVotingPower } = useReadContract({
     abi: iVotesAbi,
     address: tokenAddress,
     functionName: "getVotes",
     args: [address],
+    chainId: selectedChainId,
+    query: {
+      enabled: !!tokenAddress && tokenAddress !== "0x" && !!address && address !== "0x",
+    },
   });
-  const { writeContract: delegateWrite } = useWriteContract();
-  const { writeContract: delegateAnnouncementWrite } = useWriteContract();
+  const chainId = useChainId();
+  const { switchChainAsync } = useSwitchChain();
+  const publicClient = usePublicClient({ chainId: selectedChainId });
+  const {
+    writeContract: delegateWrite,
+    data: delegateTxHash,
+    status: delegateStatus,
+    error: delegateError,
+  } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash: delegateTxHash,
+  });
 
-  const delegateTo = () => {
-    delegateWrite({
-      abi: iVotesAbi,
-      address: tokenAddress,
-      functionName: "delegate",
-      args: [address],
-    });
+  const { addAlert } = useAlerts();
+  const lastTxHashRef = useRef<string | undefined>();
+  const lastErrorMsgRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (delegateError) {
+      const msg = delegateError.message;
+      if (lastErrorMsgRef.current !== msg) {
+        lastErrorMsgRef.current = msg;
+        addAlert(msg, { type: "error" });
+      }
+    } else {
+      lastErrorMsgRef.current = null;
+    }
+  }, [delegateError?.message]);
+
+  useEffect(() => {
+    if (delegateTxHash && isConfirmed && delegateTxHash !== lastTxHashRef.current) {
+      lastTxHashRef.current = delegateTxHash;
+      addAlert("Delegation confirmed on chain.", {
+        type: "success",
+        description: "Your voting power has been delegated.",
+        txHash: delegateTxHash,
+      });
+      refetchVotingPower();
+    }
+  }, [delegateTxHash, isConfirmed, refetchVotingPower]);
+
+  const isDelegating = delegateStatus === "pending" || isConfirming;
+
+  const delegateTo = async () => {
+    if (!tokenAddress || tokenAddress === "0x" || !address || address === "0x" || !to || to === "0x") return;
+    try {
+      if (chainId !== selectedChainId && switchChainAsync) {
+        await switchChainAsync({ chainId: selectedChainId });
+      }
+      const args = [to] as [Address];
+      if (selectedChainId === pegasus.id && publicClient) {
+        const fees = await publicClient.estimateFeesPerGas({ type: "legacy" });
+        const gasPrice = fees?.gasPrice ?? 1n * 10n ** 9n;
+        delegateWrite({
+          abi: iVotesAbi,
+          address: tokenAddress,
+          functionName: "delegate",
+          args,
+          chainId: selectedChainId,
+          type: "legacy",
+          gasPrice,
+        });
+      } else {
+        delegateWrite({
+          abi: iVotesAbi,
+          address: tokenAddress,
+          functionName: "delegate",
+          args,
+          chainId: selectedChainId,
+        });
+      }
+    } catch (e) {
+      if (e instanceof Error) addAlert(e.message, { type: "error" });
+    }
   };
 
-  const announceDelegate = () => {
-    delegateAnnouncementWrite({
-      abi: DelegateAnnouncerAbi,
-      address: PUB_DELEGATION_CONTRACT_ADDRESS,
-      functionName: "announceDelegation",
-      args: [PUB_DAO_ADDRESS, toHex(inputDescription!)],
-    });
+  const handleTo = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setTo(event?.target?.value as Address);
   };
 
   return (
-    <Card className="space-between flex flex-col p-3">
-      <div className="flex flex-row">
+    <Card className="flex flex-col gap-6 p-5">
+      {/* Profile */}
+      <div className="flex flex-row items-center gap-3">
         <Image
-          src={avatarResult.data ? avatarResult.data : "/profile.jpg"}
-          width="48"
-          height="48"
-          className="m-2 w-24 rounded-xl"
-          alt="profile pic"
+          src={avatarResult.data ?? "/profile.jpg"}
+          width={48}
+          height={48}
+          className="h-12 w-12 shrink-0 rounded-xl object-cover"
+          alt="Profile"
         />
-        <div className="flex flex-col justify-center">
-          <Link className="!font-xl !text-xl">{result.data ? result.data : formatHexString(address)}</Link>
-          <p className="text-md text-neutral-300">{votingPower ? formatUnits(votingPower!, 18)! : 0} Voting Power</p>
+        <div className="flex min-w-0 flex-col justify-center">
+          <Link className="truncate text-lg font-semibold text-primary-500">
+            {result.data ?? formatHexString(address)}
+          </Link>
+          <p className="text-sm text-neutral-500">{votingPower ? formatUnits(votingPower, 18) : "0"} Voting Power</p>
         </div>
       </div>
-      <div className="text-md m-1 grow text-neutral-500">
-        <If condition={message}>
-          <div
-            dangerouslySetInnerHTML={{
-              __html: DOMPurify.sanitize(message ?? ""),
-            }}
+
+      <If condition={message}>
+        <div
+          className="text-sm text-neutral-600"
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(message ?? "") }}
+        />
+      </If>
+
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1.5">
+          <label className="font-medium block text-sm leading-normal text-neutral-700">Network</label>
+          <select
+            className="focus:ring-1 focus:ring-primary-500 h-10 w-full rounded-lg border border-neutral-300 bg-neutral-0 px-3 py-2 text-sm font-normal leading-normal text-neutral-800 outline-none transition-colors focus:border-primary-500"
+            value={selectedChainId}
+            onChange={(e) => setSelectedChainId(Number(e.target.value))}
+          >
+            {CHAIN_OPTIONS.map((opt) => (
+              <option key={opt.chainId} value={opt.chainId}>
+                {opt.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="font-medium block text-sm leading-normal text-neutral-700">Delegatee address</label>
+          <InputText
+            placeholder="0x..."
+            helpText="Enter the address to delegate your voting power to"
+            variant={to && !isAddress(to) ? "critical" : "default"}
+            value={to}
+            onChange={handleTo}
           />
-        </If>
-        <If condition={!loading && !message}>
-          <TextAreaRichText
-            label="Summary"
-            className="pt-2"
-            value={inputDescription}
-            onChange={setInputDescription}
-            placeholder="A brief description of who you are and what you can bring to the DAO"
-          />
-        </If>
+        </div>
+        {to && !isAddress(to) && <AlertInline message="Please enter a valid Ethereum address" variant="critical" />}
       </div>
+
       <div className="flex flex-row gap-2">
-        <If condition={delegates !== address}>
-          <div className="mt-1">
-            <Button variant="secondary" size="sm" onClick={() => delegateTo()}>
-              Delegate
-            </Button>
-          </div>
-        </If>
-        <If not={message}>
-          <div className="mt-1">
-            <Button
-              variant="primary"
-              size="sm"
-              disabled={inputDescription === "<p></p>" || !inputDescription}
-              onClick={() => announceDelegate()}
-            >
-              Announce yourself
-            </Button>
-          </div>
-        </If>
+        <Button
+          className="mt-3"
+          size="lg"
+          variant="primary"
+          disabled={!address || !to || !isAddress(to) || isDelegating}
+          onClick={() => delegateTo()}
+        >
+          {delegateStatus === "pending" || isConfirming ? "Delegating..." : "Delegate"}
+        </Button>
       </div>
     </Card>
   );

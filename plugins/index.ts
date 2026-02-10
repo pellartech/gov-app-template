@@ -40,13 +40,13 @@ export const plugins: PluginItem[] = [
   //   icon: IconType.BLOCKCHAIN_BLOCK,
   //   pluginAddress: PUB_LOCK_TO_VOTE_PLUGIN_ADDRESS,
   // },
-  // {
-  //   id: "delegate-wall",
-  //   folderName: "delegateAnnouncer",
-  //   title: "Delegation",
-  //   icon: IconType.FEEDBACK,
-  //   pluginAddress: PUB_DELEGATION_CONTRACT_ADDRESS,
-  // },
+  {
+    id: "delegate-wall",
+    folderName: "delegateAnnouncer",
+    title: "Delegation",
+    icon: IconType.FEEDBACK,
+    pluginAddress: PUB_DELEGATION_CONTRACT_ADDRESS,
+  },
   {
     id: "crosschain-voting",
     folderName: "toucanVoting",

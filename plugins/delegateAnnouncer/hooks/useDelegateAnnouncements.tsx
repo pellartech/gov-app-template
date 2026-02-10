@@ -6,11 +6,20 @@ import { PUB_DELEGATION_ANNOUNCEMENTS_START_BLOCK } from "@/constants";
 
 const AnnounceDelegationEvent = getAbiItem({ abi: DelegateAnnouncerAbi, name: "AnnounceDelegation" });
 
-export function useDelegateAnnouncements(publicClient: PublicClient, delegationContract: Address, daoAddress: Address) {
+export function useDelegateAnnouncements(
+  publicClient: PublicClient | null,
+  delegationContract: Address,
+  daoAddress: Address
+) {
   const [delegateAnnouncements, setDelegateAnnouncements] = useState<DelegateAnnounce[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
+    if (!publicClient || !delegationContract || !daoAddress || delegationContract === "0x" || daoAddress === "0x") {
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     publicClient
       .getLogs({
@@ -33,12 +42,12 @@ export function useDelegateAnnouncements(publicClient: PublicClient, delegationC
       })
       .catch((err) => {
         console.error("Could not fetch the delegates list", err);
-        return null;
+        setDelegateAnnouncements([]);
       })
       .finally(() => {
         setIsLoading(false);
       });
-  }, []);
+  }, [publicClient, delegationContract, daoAddress]);
 
   return { delegateAnnouncements, isLoading };
 }

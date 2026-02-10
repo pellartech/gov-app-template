@@ -9,7 +9,7 @@ import { mainnet } from "wagmi/chains";
 import { useReadContract, useWriteContract } from "wagmi";
 import { iVotesAbi } from "../artifacts/iVotes.sol";
 import { formatHexString } from "@/utils/evm";
-import * as DOMPurify from "dompurify";
+import DOMPurify from "dompurify";
 
 type DelegateCardProps = {
   delegate: Address;
@@ -22,21 +22,31 @@ export const DelegateCard = ({ delegate, message, tokenAddress }: DelegateCardPr
   const result = useEnsName({
     chainId: mainnet.id,
     address: delegate,
+    query: {
+      enabled: !!delegate && delegate !== "0x",
+    },
   });
   const avatarResult = useEnsAvatar({
-    name: normalize(result.data!),
+    name: result.data ? normalize(result.data) : undefined,
     chainId: mainnet.id,
     gatewayUrls: ["https://cloudflare-ipfs.com"],
+    query: {
+      enabled: !!result.data,
+    },
   });
   const { data: votingPower } = useReadContract({
     abi: iVotesAbi,
     address: tokenAddress,
     functionName: "getVotes",
     args: [delegate],
+    query: {
+      enabled: !!tokenAddress && tokenAddress !== "0x" && !!delegate && delegate !== "0x",
+    },
   });
   const { writeContract: delegateWrite } = useWriteContract();
 
   const delegateTo = () => {
+    if (!tokenAddress || tokenAddress === "0x" || !delegate || delegate === "0x") return;
     delegateWrite({
       abi: iVotesAbi,
       address: tokenAddress,

@@ -26,12 +26,19 @@ export const PUB_DELEGATION_ANNOUNCEMENTS_START_BLOCK = BigInt(
   process.env.NEXT_PUBLIC_DELEGATION_ANNOUNCEMENTS_START_BLOCK || "0"
 );
 
-// Target chain
+// Target chain (L1 = PUB_CHAIN, L2 = PUB_L2_CHAIN)
 export const PUB_CHAIN_NAME = (process.env.NEXT_PUBLIC_CHAIN_NAME ?? "sepolia") as ChainName;
 export const PUB_CHAIN = getChain(PUB_CHAIN_NAME);
 
 export const PUB_L2_CHAIN_NAME = (process.env.NEXT_PUBLIC_L2_CHAIN_NAME || "arbitrumSepolia") as ChainName;
 export const PUB_L2_CHAIN = getChain(PUB_L2_CHAIN_NAME);
+
+/** Token address for delegation: PUB_CHAIN (L1) → PUB_TOKEN_L1_ADDRESS, PUB_L2_CHAIN (L2) → PUB_TOKEN_L2_ADDRESS. */
+export function getTokenAddressByChainId(chainId: number): Address {
+  if (chainId === PUB_CHAIN.id) return PUB_TOKEN_L1_ADDRESS;
+  if (chainId === PUB_L2_CHAIN.id) return PUB_TOKEN_L2_ADDRESS;
+  return PUB_TOKEN_ADDRESS as Address;
+}
 
 // Network and services
 export const PUB_ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY ?? "";
