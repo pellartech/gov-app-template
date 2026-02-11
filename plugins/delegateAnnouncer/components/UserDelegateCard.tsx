@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { If } from "@/components/if";
 import Image from "next/image";
 import { AlertInline, Button, Card, InputText, Link } from "@aragon/ods";
-import { Address, formatUnits, isAddress } from "viem";
+import { Address, formatUnits, isAddress, zeroAddress } from "viem";
 import { useEnsName, useEnsAvatar } from "wagmi";
 import { normalize } from "viem/ens";
 import { mainnet } from "wagmi/chains";
@@ -38,21 +38,18 @@ const CHAIN_OPTIONS = [
 
 type SelfDelegationProfileCardProps = {
   address: Address;
-  tokenAddress: Address;
-  loading: boolean;
-  message: string | undefined;
   delegates: Address;
+  selectedChainId: number;
+  setSelectedChainId: (chainId: number) => void;
 };
 
 export const SelfDelegationProfileCard = ({
   address,
-  tokenAddress: _tokenAddressProp,
-  message,
-  loading,
   delegates,
+  selectedChainId,
+  setSelectedChainId,
 }: SelfDelegationProfileCardProps) => {
   const [to, setTo] = useState<Address>();
-  const [selectedChainId, setSelectedChainId] = useState<number>(PUB_CHAIN.id);
 
   const tokenAddress = getTokenAddressByChainId(selectedChainId);
 
@@ -180,11 +177,10 @@ export const SelfDelegationProfileCard = ({
         </div>
       </div>
 
-      <If condition={message}>
-        <div
-          className="text-sm text-neutral-600"
-          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(message ?? "") }}
-        />
+      <If condition={delegates && delegates !== "0x" && delegates !== zeroAddress && isAddress(delegates)}>
+        <p className="text-sm text-neutral-600">
+          Current delegate: <span className="font-medium text-neutral-800">{formatHexString(delegates)}</span>
+        </p>
       </If>
 
       <div className="flex flex-col gap-4">
@@ -203,7 +199,7 @@ export const SelfDelegationProfileCard = ({
           </select>
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className="font-medium block text-sm leading-normal text-neutral-700">Delegatee address</label>
+          <label className="font-medium block text-sm leading-normal text-neutral-700">Delegate address</label>
           <InputText
             placeholder="0x..."
             helpText="Enter the address to delegate your voting power to"

@@ -1,32 +1,27 @@
-import { usePublicClient, useReadContract } from "wagmi";
+import { useReadContract } from "wagmi";
 import { useAccount } from "wagmi";
-import { PublicClient, parseAbi, Address } from "viem";
-import { ReactNode } from "react";
-import { Else, ElseIf, If, Then } from "@/components/if";
-import { PleaseWaitSpinner } from "@/components/please-wait";
-import { useDelegateAnnouncements } from "../hooks/useDelegateAnnouncements";
-import { DelegateCard } from "@/plugins/delegateAnnouncer/components/DelegateCard";
+import { parseAbi, Address } from "viem";
+import { ReactNode, useMemo, useState } from "react";
+import { If } from "@/components/if";
 import { SelfDelegationProfileCard } from "../components/UserDelegateCard";
-import { PUB_DAO_ADDRESS, PUB_DELEGATION_CONTRACT_ADDRESS, PUB_TOKEN_ADDRESS } from "@/constants";
+import { getTokenAddressByChainId, PUB_CHAIN, PUB_DELEGATION_CONTRACT_ADDRESS } from "@/constants";
 
 export default function DelegateAnnouncements() {
-  const publicClient = usePublicClient();
   const account = useAccount();
+  const [selectedChainId, setSelectedChainId] = useState<number>(PUB_CHAIN.id);
 
-  const { data: delegates, status } = useReadContract({
+  const tokenAddress = useMemo(() => getTokenAddressByChainId(selectedChainId), [selectedChainId]);
+
+  const { data: delegates } = useReadContract({
     abi: iVotesAbi,
-    address: PUB_TOKEN_ADDRESS as Address,
+    address: tokenAddress,
     functionName: "delegates",
     args: account.address ? [account.address as Address] : undefined,
+    chainId: selectedChainId,
     query: {
-      enabled: !!account.address,
+      enabled: !!account.address && !!tokenAddress && tokenAddress !== "0x",
     },
-  } as any);
-  const { delegateAnnouncements, isLoading: delegateAnnouncementsIsLoading } = useDelegateAnnouncements(
-    publicClient as PublicClient,
-    PUB_DELEGATION_CONTRACT_ADDRESS,
-    account.address as Address
-  );
+  });
 
   return (
     <MainSection>
@@ -36,10 +31,9 @@ export default function DelegateAnnouncements() {
             <h2 className="pb-3 text-xl font-semibold text-neutral-700">Your profile</h2>
             <SelfDelegationProfileCard
               address={account.address!}
-              tokenAddress={PUB_TOKEN_ADDRESS}
-              delegates={(delegates as Address) || account.address!}
-              loading={status === "pending"}
-              message={delegateAnnouncements.findLast((an) => an.delegate === account.address)?.message}
+              delegates={delegates as Address}
+              selectedChainId={selectedChainId}
+              setSelectedChainId={setSelectedChainId}
             />
           </div>
         </If>

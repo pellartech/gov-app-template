@@ -26,7 +26,7 @@ export const PUB_DELEGATION_ANNOUNCEMENTS_START_BLOCK = BigInt(
   process.env.NEXT_PUBLIC_DELEGATION_ANNOUNCEMENTS_START_BLOCK || "0"
 );
 
-// Target chain (L1 = PUB_CHAIN, L2 = PUB_L2_CHAIN)
+// Target chain
 export const PUB_CHAIN_NAME = (process.env.NEXT_PUBLIC_CHAIN_NAME ?? "sepolia") as ChainName;
 export const PUB_CHAIN = getChain(PUB_CHAIN_NAME);
 
