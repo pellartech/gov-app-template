@@ -17,14 +17,24 @@ import {
 import { iVotesAbi } from "../artifacts/iVotes.sol";
 import { formatHexString } from "@/utils/evm";
 import DOMPurify from "dompurify";
-import { getTokenAddressByChainId, PUB_CHAIN, PUB_CHAIN_NAME, PUB_L2_CHAIN, PUB_L2_CHAIN_NAME } from "@/constants";
+import {
+  getTokenAddressByChainId,
+  PUB_CHAIN,
+  PUB_CHAIN_NAME,
+  PUB_L2_CHAIN,
+  PUB_L2_CHAIN_NAME,
+  PUB_L2_CHAIN_OP,
+  PUB_L2_CHAIN_NAME_OP,
+} from "@/constants";
 import { pegasus } from "@/utils/chains";
+import { readableChainName } from "@/utils/chains";
 import { useAlerts } from "@/context/Alerts";
 
 const CHAIN_OPTIONS = [
-  { name: PUB_CHAIN_NAME, chainId: PUB_CHAIN.id },
-  { name: PUB_L2_CHAIN_NAME, chainId: PUB_L2_CHAIN.id },
-] as const;
+  { name: readableChainName(PUB_CHAIN_NAME), chainId: PUB_CHAIN.id },
+  { name: readableChainName(PUB_L2_CHAIN_NAME), chainId: PUB_L2_CHAIN.id },
+  { name: readableChainName(PUB_L2_CHAIN_NAME_OP), chainId: PUB_L2_CHAIN_OP.id },
+];
 
 type SelfDelegationProfileCardProps = {
   address: Address;
