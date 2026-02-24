@@ -38,6 +38,7 @@ export const PUB_ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY ?? ""
 
 export const PUB_WEB3_ENDPOINT = (process.env.NEXT_PUBLIC_WEB3_URL_PREFIX ?? "") + PUB_ALCHEMY_API_KEY;
 export const PUB_WEB3_ENDPOINT_L2 = process.env.NEXT_PUBLIC_WEB3_URL_PREFIX_L2 ?? "";
+export const PUB_WEB3_ENDPOINT_L2_OP = process.env.NEXT_PUBLIC_WEB3_URL_PREFIX_L2_OP ?? "";
 
 export const PUB_ETHERSCAN_API_KEY = process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY ?? "";
 
@@ -61,3 +62,15 @@ export const PUB_MINTABLE_TOKEN_ADDRESS = (process.env.NEXT_PUBLIC_MINTABLE_TOKE
 export const PUB_PAYMASTER_ADDRESS = (process.env.NEXT_PUBLIC_PAYMASTER_ADDRESS ?? "") as Address;
 
 export const PUB_BLOCKSCOUT_URL = process.env.NEXT_PUBLIC_BLOCKSCOUT_URL ?? "";
+
+// L2 Optimism (OP)
+export const PUB_L2_CHAIN_NAME_OP = (process.env.NEXT_PUBLIC_L2_CHAIN_NAME_OP ?? "optimismSepolia") as ChainName;
+export const PUB_TOKEN_L2_ADDRESS_OP = (process.env.NEXT_PUBLIC_TOKEN_L2_ADDRESS_OP ?? "") as Address;
+export const PUB_L2_CHAIN_OP = getChain(PUB_L2_CHAIN_NAME_OP);
+
+export function getTokenAddressByChainId(chainId: number): Address {
+  if (chainId === PUB_CHAIN.id) return PUB_TOKEN_L1_ADDRESS;
+  if (chainId === PUB_L2_CHAIN.id) return PUB_TOKEN_L2_ADDRESS;
+  if (chainId === PUB_L2_CHAIN_OP.id) return PUB_TOKEN_L2_ADDRESS_OP;
+  return PUB_TOKEN_ADDRESS as Address;
+}

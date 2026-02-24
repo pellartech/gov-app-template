@@ -5,11 +5,13 @@ import {
   PUB_APP_NAME,
   PUB_CHAIN,
   PUB_L2_CHAIN,
+  PUB_L2_CHAIN_OP,
   PUB_PROJECT_URL,
   PUB_WALLET_CONNECT_PROJECT_ID,
   PUB_WALLET_ICON,
   PUB_WEB3_ENDPOINT,
   PUB_WEB3_ENDPOINT_L2,
+  PUB_WEB3_ENDPOINT_L2_OP,
 } from "@/constants";
 import { mainnet } from "viem/chains";
 
@@ -22,12 +24,13 @@ const metadata = {
 };
 
 export const config = createConfig({
-  chains: [PUB_CHAIN, mainnet, PUB_L2_CHAIN],
+  chains: [PUB_CHAIN, mainnet, PUB_L2_CHAIN, PUB_L2_CHAIN_OP],
   syncConnectedChain: true,
   ssr: true,
   transports: {
     [PUB_CHAIN.id]: http(PUB_WEB3_ENDPOINT, { batch: true }),
     [PUB_L2_CHAIN.id]: http(PUB_WEB3_ENDPOINT_L2, { batch: true }),
+    [PUB_L2_CHAIN_OP.id]: http(PUB_WEB3_ENDPOINT_L2_OP, { batch: true }),
     [mainnet.id]: http(PUB_WEB3_ENDPOINT, { batch: true }),
   },
   connectors: [
