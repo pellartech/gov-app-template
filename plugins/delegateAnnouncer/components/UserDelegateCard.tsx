@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { If } from "@/components/if";
 import Image from "next/image";
 import { AlertInline, Button, Card, InputText, Link } from "@aragon/ods";
 import { Address, formatUnits, isAddress, zeroAddress } from "viem";
@@ -16,7 +15,6 @@ import {
 } from "wagmi";
 import { iVotesAbi } from "../artifacts/iVotes.sol";
 import { formatHexString } from "@/utils/evm";
-import DOMPurify from "dompurify";
 import {
   getTokenAddressByChainId,
   PUB_CHAIN,
@@ -171,17 +169,17 @@ export const SelfDelegationProfileCard = ({
         />
         <div className="flex min-w-0 flex-col justify-center">
           <Link className="truncate text-lg font-semibold text-primary-500">
-            {result.data ?? formatHexString(address)}
+            {result.data ?? (address ? formatHexString(address) : null)}
           </Link>
           <p className="text-sm text-neutral-500">{votingPower ? formatUnits(votingPower, 18) : "0"} Voting Power</p>
         </div>
       </div>
 
-      <If condition={delegates && delegates !== "0x" && delegates !== zeroAddress && isAddress(delegates)}>
+      {isAddress(address) && delegates !== zeroAddress && isAddress(delegates) && (
         <p className="text-sm text-neutral-600">
           Current delegate: <span className="font-medium text-neutral-800">{formatHexString(delegates)}</span>
         </p>
-      </If>
+      )}
 
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
